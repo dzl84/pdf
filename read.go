@@ -140,7 +140,12 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 		buf = buf[:len(buf)-1]
 	}
 	buf = bytes.TrimRight(buf, "\r\n\t ")
-	if !bytes.HasSuffix(buf, []byte("%%EOF")) {
+	// Some PDF file has a signature at the end of the file
+	// Those file will trigger 'missing %%EOF' error
+	// Therefore change the check 
+	// if !bytes.HasSuffix(buf, []byte("%%EOF")) {
+	eof := findLastLine(buf, "%%EOF")
+	if eof < 0 {
 		return nil, fmt.Errorf("not a PDF file: missing %%%%EOF")
 	}
 	i := findLastLine(buf, "startxref")
